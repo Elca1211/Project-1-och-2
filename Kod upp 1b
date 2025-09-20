@@ -1,0 +1,36 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def simpson(func, a, b, n):
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    fx = func(x)
+    s = (h/3) * (fx[0] + 4 * np.sum(fx[1:-1:2]) + 2 * np.sum(fx[2:-1:2]) + fx[-1])
+    return s
+
+p = 9810.0  # N/m^3
+
+def w(y):
+    return 20 - 10*np.exp(-0.0012*y**2)
+
+def integrand(y, d):
+    return p * (d - y) * w(y)
+
+def force_newtonsmill(d, n):
+    return simpson(lambda y: integrand(y, d), 0, d, n)
+
+print(force_newtonsmill(20, 1000))
+
+d = 20
+
+values_y = np.linspace(0, d, 300)
+values_f = integrand(values_y, d)
+
+plt.figure(figsize=(8,5))
+plt.plot(values_y, values_f, label="Integranden f(y)")
+plt.xlabel("y [m]")
+plt.ylabel("f(y) [N/m]")
+plt.title(f"Integranden för dammkraften, d = {d} m")
+plt.legend()
+plt.grid(True)
+plt.show()
