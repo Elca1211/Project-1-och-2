@@ -1,0 +1,77 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def simpson(func, a, b, n):
+    if n % 2 == 1:
+        n += 1
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    fx = func(x)
+    s = (h/3) * (fx[0] + 4 * np.sum(fx[1:-1:2]) + 2 * np.sum(fx[2:-2:2]) + fx[-1])
+    return s
+
+
+p = 9810.0  # N/m^3
+d_max = 30.0  # m
+
+def w(y):
+   return 20 - 10*np.exp(-0.0012*y**2)
+
+
+def integrand(y, d):
+   return p * (d - y) * w(y)
+
+
+def force_newtonsmill(d, n=1000):
+   return simpson(lambda y: integrand(y, d), 0.0, d, n)
+
+
+def bisection(fun,a,b,tol):
+    s_fa = np.sign(fun(a))
+    s_fb = np.sign(fun(b))
+# Check input
+    assert s_fa != s_fb
+    x = (a+b)/2
+    niter = 0
+    while (b-a)/2 > tol:
+        niter += 1
+        s_fx = np.sign(fun(x))
+        if s_fa == s_fx:
+            a = x; s_fa = s_fx
+        else:
+            b = x; s_fb = s_fx
+        x = (a+b)/2
+    return x, niter
+
+def waterlevel(c, tol_digits=5, n=1000):
+
+    tol = 0.5 * 10 ** (-tol_digits)
+    g = lambda d: force_newtonsmill(d, n) - c
+
+    if force_newtonsmill(d_max, n) <= c:
+        return d_max, n
+    else:
+        d, iters = bisection(g, 0.0, d_max, tol)
+        return d, iters
+
+c = 22_000e3  # N
+d_star, iters = waterlevel(c, tol_digits=5)
+f_star = force_newtonsmill(d_star)
+
+print(f"Vattennivå d = {d_star:.5f} m (iterationer: {iters})")
+print(f"Kontroll: f(d) = {f_star/1e3:.3f} kN (ska vara ungefär lika med {c/1e3:.0f} kN)")
+
+
+values_y = np.linspace(0, d_star, 300)
+values_f = integrand(values_y, d_star)
+
+
+plt.figure(figsize=(8,5))
+plt.plot(values_y, values_f, label="Integranden f(y)")
+plt.xlabel("y [m]")
+plt.ylabel("f(y) [N/m]")
+plt.title(f"Integranden för dammkraften, d = {d_star:.5f} m")
+plt.legend()
+plt.grid(True)
+plt.show()
