@@ -22,9 +22,9 @@ def trapets(func, a, b, n):
     return T
 
 
-resultat = (trapets(force, 0, 12, 100))
+resultat = (trapets(force, 0, 12, 6))
 
-xx = np.linspace(0, 12, 300) 
+xx = np.linspace(0, 12, 500) 
 yy = force(xx)
 f_points = rho * g * (H - y) * w
 print(f'Den resulterande kraften är = {resultat} N')
