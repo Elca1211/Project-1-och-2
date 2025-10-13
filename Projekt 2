@@ -1,0 +1,62 @@
+from route_nyc import route_nyc
+import numpy as np
+
+# Plocka ut skalärhastighet från modellen (undviker NumPy-varningar)
+def _s(t, x):
+    y = route_nyc(float(t), float(x))
+    if isinstance(y, np.ndarray):
+        return float(y.reshape(-1)[0])
+    return float(y)
+
+def nyc_route_traveler_euler(t0, h):
+    """
+    Eulers metod med förallokerade arrayer och fast max-antal steg (np.ceil).
+    Antag: ankomst före 24.00.
+    Returnerar (t, x, v) som numpy-arrayer.
+    """
+    L = 60.0   # ruttlängd [km]
+    T = 24.0   # midnatt [h]
+    N = int(np.ceil((T - t0) / h))  # max antal steg
+
+    t = np.empty(N + 1, float)
+    x = np.empty(N + 1, float)
+    v = np.empty(N + 1, float)
+
+    t[0] = t0
+    x[0] = 0.0
+    v[0] = _s(t[0], x[0])
+    if v[0] <= 0:
+        raise ValueError("Start-hastigheten är noll/negativ.")
+
+    k = 0  # index för sista giltiga punkt
+    for n in range(N):
+        dx = h * v[n]
+        xn = x[n] + dx
+
+        if xn >= L:  # korta sista tidssteget till exakt 60 km
+            if v[n] <= 0:
+                raise ValueError("Hastigheten blev noll/negativ nära slutet.")
+            h_last = (L - x[n]) / v[n]
+            t[n + 1] = t[n] + h_last
+            x[n + 1] = L
+            v[n + 1] = _s(t[n + 1], x[n + 1])
+            k = n + 1
+            break
+
+        t[n + 1] = t[n] + h
+        x[n + 1] = xn
+        v[n + 1] = _s(t[n + 1], x[n + 1])
+        k = n + 1
+
+    # Trunka till faktiskt antal steg (0..k)
+    return t[:k + 1], x[:k + 1], v[:k + 1]
+
+
+# --- Exempel/test ---
+if __name__ == "__main__":
+    # Rumi: start 16:00 (t0=16.0), Mira: start 17:30 (t0=17.5)
+    t_r, x_r, v_r = nyc_route_traveler_euler(16.0, 0.01)
+    t_m, x_m, v_m = nyc_route_traveler_euler(17.5, 0.01)
+
+print(f"Rumis restid: {t_r[-1] - 16.0:.4f} h")
+print(f"Miras restid: {t_m[-1] - 17.5:.4f} h")
