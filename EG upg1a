@@ -1,0 +1,24 @@
+import numpy as np
+
+def func(y,w):
+    p = 1000*9.81
+    return p*(12-y)*w
+
+def trapets(a,b,n,w):
+    h = (b-a)/n
+    fy = []
+    y = np.linspace(a,b,n+1)
+    for index in range(len(w)):
+        fy.append(func(y[index],w[index]))
+    T = h*(np.sum(fy)-(fy[0]+fy[-1])/2)
+    return T
+
+w = [10.00, 11.18, 12.18, 12.20,13.00, 13.50, 14.00]
+I2h = (trapets(0,12, 6, w))
+print("Integralens värde(6 delintervall):",I2h)
+w2 = [10.00, 12.18,13.00, 14.00]
+Ih = (trapets(0,12, 3, w2))
+print("Integralens värde(3 delintervall):",Ih)
+
+Eh = (Ih-I2h)/3
+print("Diskretiseringsfel:",abs(Eh))
